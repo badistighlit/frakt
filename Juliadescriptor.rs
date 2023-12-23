@@ -1,5 +1,6 @@
 mod complexe;
 use complexe::Complexe;
+
 struct JuliaDescriptor {
     c:Complexe,
     divergence_threshold_square: f64,
