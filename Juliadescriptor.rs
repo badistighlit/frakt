@@ -6,8 +6,21 @@ struct JuliaDescriptor {
     
 }
 impl JuliaDescriptor {
-    fn fonction_calcul(&self, a: Complexe) -> Complexe {
-        return complexe::addition(complexe::multiplication(a,a) , self.c);
+    
+    
+    fn fonction_calcul(&self, mut a: Complexe) -> Complexe {
+        let mut i = 0;
+        let maxi = 100;
+    
+        while i < maxi {
+            a = complexe::addition(complexe::multiplication(a, a), self.c);
+    
+            if a.re*a.re+a.im*a.im>self.divergence_threshold_square {
+                break;
+            }
+            i += 1;
+        }
+    a
     }
 }
 
