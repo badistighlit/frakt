@@ -1,4 +1,4 @@
-
+#[derive(Clone, Copy)] 
 pub struct Complexe{
     pub re : f64,
     pub im : f64
