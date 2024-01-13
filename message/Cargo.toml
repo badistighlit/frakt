@@ -1,0 +1,14 @@
+[package]
+name = "message"
+version = "0.1.0"
+edition = "2021"
+
+
+authors = ["Tighlit Badis <badis.tighlit@gmail.com>"]
+
+
+[lib]
+name = "message"
+path = "src/libs.rs"
+
+
