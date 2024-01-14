@@ -11,4 +11,7 @@ authors = ["Tighlit Badis <badis.tighlit@gmail.com>"]
 name = "message"
 path = "src/libs.rs"
 
+[dependencies]
+complexe = {path="Z:/Esgi/rust/frakt/frakt/complexe"}
+
 
