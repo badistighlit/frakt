@@ -1,5 +1,5 @@
-use messages::messages::{FragmentRequest, FragmentResult, Message};
-use std::io::{Read, Write};
+use messages::messages::{FragmentRequest, Message};
+use std::io::{Write};
 use std::net::TcpStream;
 
 pub fn send_message(mut stream: &TcpStream, message: Message) {
