@@ -1,0 +1,19 @@
+[package]
+name = "messages"
+version = "0.1.0"
+edition = "2021"
+
+
+authors = ["Tighlit Badis <badis.tighlit@gmail.com>"]
+
+
+[lib]
+name = "messages"
+path = "src/libs.rs"
+
+[dependencies]
+complexe = {path="Z:/Esgi/rust/frakt/frakt/complexe"}
+serde = "1.0"
+serde_derive = "1.0"
+
+

@@ -1,0 +1,1 @@
+Z:\Esgi\rust\frakt\frakt\worker\target\debug\worker.exe: Z:\Esgi\rust\frakt\frakt\complexe\src\libs.rs Z:\Esgi\rust\frakt\frakt\messages\src\libs.rs Z:\Esgi\rust\frakt\frakt\messages\src\messages.rs Z:\Esgi\rust\frakt\frakt\worker\src\main.rs
