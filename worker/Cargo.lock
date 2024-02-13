@@ -14,11 +14,12 @@ checksum = "b1a46d1a171d865aa5f83f92695765caa047a9b4cbae2cbf37dbd613a793fd4c"
 
 [[package]]
 name = "messages"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "complexe",
  "serde",
  "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -95,9 +96,10 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
 name = "worker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "messages",
  "serde",
+ "serde_derive",
  "serde_json",
 ]

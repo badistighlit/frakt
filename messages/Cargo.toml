@@ -1,6 +1,6 @@
 [package]
 name = "messages"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 
@@ -13,7 +13,8 @@ path = "src/libs.rs"
 
 [dependencies]
 complexe = {path="Z:/Esgi/rust/frakt/frakt/complexe"}
-serde = "1.0"
-serde_derive = "1.0"
+serde = "1.0.125"
+serde_json = "1.0.66"
+serde_derive = "1.0.125"
 
 

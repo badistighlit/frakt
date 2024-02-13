@@ -1,5 +1,4 @@
-use serde_derive::Deserialize;
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 /*
 *************************************************************************** */        
 
@@ -114,6 +113,12 @@ pub enum Message {
     FragmentTask(FragmentTask),
     FragmentResult(FragmentResult),
     FragmentRequest(FragmentRequest),
+}
+
+//ù*************** functions ****************************************
+pub fn parse_json_string(json_string: &str) -> Result<Message, serde_json::Error> {
+    let parsed_data: Message = serde_json::from_str(json_string)?;
+    Ok(parsed_data)
 }
 //***********************COMPLEXEE */
 

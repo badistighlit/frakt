@@ -1,6 +1,7 @@
-use messages::messages::{FragmentRequest, Message};
-use std::io::{Write};
+use messages::messages::{FragmentRequest,FragmentTask, Message};
+use std::io::{Write,Read};
 use std::net::TcpStream;
+use std::str;
 
 pub fn send_message(mut stream: &TcpStream, message: Message) {
     let serialized = serde_json::to_string(&message).expect("failed to serialize object");
@@ -15,32 +16,76 @@ pub fn send_message(mut stream: &TcpStream, message: Message) {
   
       // Envoi du message JSON
       stream.write_all(serialized.as_bytes());
-  
-      // Envoi des données binaires
-      //stream.write_all(data);
-    
-
-    stream
-        
-        .write_all(&size_bytes)
-        .expect("failed to send serialized size");
     let result = stream
         .write_all(serialized.as_bytes())
-        .expect("failed to send message");
-    println!("{result:?}");
+        .expect("erreur envoie message");
+    println!("{result:?} ");
+    match stream.write_all(serialized.as_bytes()) {
+        Ok(()) => println!("Message envoyé avec succès"),
+        Err(err) => eprintln!("Erreur lors de l'envoi final : {}", err),
+    }
+    reception_message(stream);
 }
+
+
+
+
+pub fn reception_message(mut stream: &TcpStream) {
+    // recuperation du msg
+    let mut size_bytes = [0u8; 4];
+    stream.read_exact(&mut size_bytes).expect("Erreur lors de la lecture de la taille du message");
+    
+    let mut size_json = [0; 4];
+    stream.read_exact(&mut size_json).expect("Erreur lors de la lecture de la taille du message");
+     
+    
+    let msg_size = u32::from_be_bytes(size_json);
+    //println!("taille mssg size: {:?}", msg_size);
+
+    let mut json_buffer = vec![0u8; msg_size as usize];
+    //println!("json_buffer : {:?}",json_buffer);
+    stream.read_exact(&mut json_buffer).expect("Erreur lors de la lecture du message JSON");
+    //println!("json_buffer après réception : {:?}",json_buffer);
+    let message = String::from_utf8_lossy(&json_buffer).into_owned();
+    let fragment_request = parse_json_string(&message);
+
+
+    
+    match parse_json_string(&message) {
+        Ok(parsed_message) => {
+            
+            dbg!(parsed_message);
+        }
+        Err(err) => {
+            eprintln!("Erreur lors de la désérialisation du message JSON : {}", err);
+        }
+   
+
+
+}
+}
+
+
+fn parse_json_string(json_string: &str) -> Result<Message, serde_json::Error> {
+    let parsed_data: Message = serde_json::from_str(json_string)?;
+    Ok(parsed_data)
+}
+
+
+
 
 pub fn main() {
     let server_address = "localhost:8787";
     let fragment_request = FragmentRequest {
-        worker_name: String::from("zaaa"),
-        maximal_work_load: 1000,
+        worker_name: String::from("wsh"),
+        maximal_work_load: 230,
     };
 
   
     let stream = TcpStream::connect(server_address).unwrap();
 
     let message_send: Message = Message::FragmentRequest(fragment_request);
-    send_message(&stream,message_send);
+    let a = send_message(&stream,message_send);
+    println!("{:?}",a);
   
 }
