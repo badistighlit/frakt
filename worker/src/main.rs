@@ -1,4 +1,4 @@
-use messages::messages::{FragmentRequest,FragmentTask, Message};
+use messages::messages::{FragmentResult,FragmentRequest,FragmentTask, Message, JuliaDescriptor};
 use std::io::{Write,Read};
 use std::net::TcpStream;
 use std::str;
@@ -70,6 +70,10 @@ fn parse_json_string(json_string: &str) -> Result<Message, serde_json::Error> {
     let parsed_data: Message = serde_json::from_str(json_string)?;
     Ok(parsed_data)
 }
+
+
+
+
 
 
 

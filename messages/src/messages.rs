@@ -35,30 +35,31 @@ impl JuliaDescriptor {
 
 //************************* Struct**************************************************** */
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
 struct Id {
     offset: u8,
     count: u8,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
 struct Point {
     x: f64,
     y: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Fractal {
     Julia(JuliaDescriptor),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+
+#[derive(Debug, Serialize, Deserialize,Clone)]
 struct Resolution {
     nx: u16,
     ny: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Range {
     min: Point,
     max: Point,
@@ -70,7 +71,7 @@ struct U8Data {
     count: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct PixelData {
     offset: u32,
     count: u32,
@@ -82,7 +83,7 @@ struct PixelIntensity {
     count: f32,
 }
 //************************************FRAGMENT TASK***************************** */
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct FragmentTask {
     id: Id,
     fractal: Fractal,
@@ -92,14 +93,14 @@ pub struct FragmentTask {
 }
 
 //************************ FragmentRequest********************************************************/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct FragmentRequest{
    pub worker_name:String,
    pub maximal_work_load: u32
 }
 
 //****************************FragmentResult************************************************** */
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct FragmentResult{
  id: Id,
  resolution: Resolution,
@@ -108,7 +109,7 @@ pub struct FragmentResult{
 
 }
 //****************DIFFERENT MESSAGE***************************** */
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
 pub enum Message {
     FragmentTask(FragmentTask),
     FragmentResult(FragmentResult),
@@ -144,3 +145,53 @@ pub fn multiplication(c1: Complexe, c2: Complexe) -> Complexe {
     }
 
 
+//µµµµµ*************************************** FONCTION***********
+fn calculate_fragment(fragment_task: &FragmentTask) -> FragmentResult {
+    // Récupérer les informations nécessaires du FragmentTask
+    let resolution = &fragment_task.resolution;
+    let range = &fragment_task.range;
+
+    // Calculer les valeurs des pixels pour la fenêtre spécifiée
+    let mut pixels_data = PixelData {
+        offset: 0,
+        count: 0,
+    };
+
+    // Vecteur pour stocker les valeurs des pixels
+    let mut pixels: Vec<f32> = Vec::new();
+
+    for x in 0..resolution.nx {
+        for y in 0..resolution.ny {
+            // Convertir les coordonnées pixel en coordonnées physiques dans la fenêtre
+            let phys_x = range.min.x + (x as f64 / resolution.nx as f64) * (range.max.x - range.min.x);
+            let phys_y = range.min.y + (y as f64 / resolution.ny as f64) * (range.max.y - range.min.y);
+
+            // Créer un complexe à partir des coordonnées physiques
+            let complexe = Complexe { re: phys_x, im: phys_y };
+
+            // Extraire le JuliaDescriptor de l'enum Fractal
+            if let Fractal::Julia(julia_desc) = &fragment_task.fractal {
+                // Utiliser la fonction de calcul pour obtenir la valeur du pixel
+                let result = julia_desc.fonction_calcul(complexe);
+
+                // Ajouter la valeur du pixel au vecteur 'pixels'
+                pixels.push(result.re as f32);
+                pixels.push(result.im as f32);
+            }
+        }
+    }
+
+    // Remplir les données du pixel dans pixels_data (à remplacer par vos calculs réels)
+    pixels_data.offset = 0;
+    pixels_data.count = pixels.len() as u32;
+
+    // Créer le FragmentResult avec les résultats des calculs
+    let fragment_result = FragmentResult {
+        id: fragment_task.id.clone(),
+        resolution: resolution.clone(),
+        range: range.clone(),
+        pixels: pixels_data,
+    };
+
+    fragment_result
+}
