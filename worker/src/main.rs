@@ -1,4 +1,5 @@
 use messages::messages::{FragmentResult,FragmentRequest,FragmentTask, Message, JuliaDescriptor};
+use messages::messages::calculate_fragment;
 use std::io::{Write,Read};
 use std::net::TcpStream;
 use std::str;
@@ -53,16 +54,24 @@ pub fn reception_message(mut stream: &TcpStream) {
     
     match parse_json_string(&message) {
         Ok(parsed_message) => {
-            
-            dbg!(parsed_message);
+            match parsed_message {
+                Message::FragmentTask(fragment_task) => {
+                    // Si le message est de type FragmentTask, calculer le résultat
+                    let fragment_result = calculate_fragment(&fragment_task);
+                    
+                    // Envoi du FragmentResult
+                    send_message(&stream, Message::FragmentResult(fragment_result));
+                }
+                _ => {
+                    // Traitez d'autres types de messages si nécessaire
+                    dbg!(parsed_message);
+                }
+            }
         }
         Err(err) => {
             eprintln!("Erreur lors de la désérialisation du message JSON : {}", err);
         }
-   
-
-
-}
+    }
 }
 
 

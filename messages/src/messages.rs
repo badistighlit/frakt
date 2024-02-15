@@ -14,14 +14,14 @@ pub struct JuliaDescriptor {
 }
 
 impl JuliaDescriptor {
-    pub fn fonction_calcul(&self, mut a: Complexe) -> Complexe {
+    pub fn fonction_calcul(&self, mut a: Complexe, max_iteration : u16) -> Complexe {
         let mut i = 0 ;
         
         let maxi = 100;
 
-        while i < maxi {
+        while i < max_iteration {
             a = addition(multiplication(a, a), self.c);
-            println!("{}+i{}", a.re, a.im);
+            //println!("{}+i{}", a.re, a.im);
             if a.re * a.re + a.im * a.im > self.divergence_threshold_square {
                 break;
             }
@@ -146,7 +146,7 @@ pub fn multiplication(c1: Complexe, c2: Complexe) -> Complexe {
 
 
 //µµµµµ*************************************** FONCTION***********
-fn calculate_fragment(fragment_task: &FragmentTask) -> FragmentResult {
+pub fn calculate_fragment(fragment_task: &FragmentTask) -> FragmentResult {
     // Récupérer les informations nécessaires du FragmentTask
     let resolution = &fragment_task.resolution;
     let range = &fragment_task.range;
@@ -158,9 +158,10 @@ fn calculate_fragment(fragment_task: &FragmentTask) -> FragmentResult {
     };
 
     // Vecteur pour stocker les valeurs des pixels
-    let mut pixels: Vec<f32> = Vec::new();
+    let mut pixels: Vec<PixelIntensity> = Vec::new();
 
     for x in 0..resolution.nx {
+        println!("{}", x);
         for y in 0..resolution.ny {
             // Convertir les coordonnées pixel en coordonnées physiques dans la fenêtre
             let phys_x = range.min.x + (x as f64 / resolution.nx as f64) * (range.max.x - range.min.x);
@@ -172,11 +173,12 @@ fn calculate_fragment(fragment_task: &FragmentTask) -> FragmentResult {
             // Extraire le JuliaDescriptor de l'enum Fractal
             if let Fractal::Julia(julia_desc) = &fragment_task.fractal {
                 // Utiliser la fonction de calcul pour obtenir la valeur du pixel
-                let result = julia_desc.fonction_calcul(complexe);
+                let result = julia_desc.fonction_calcul(complexe,fragment_task.max_iteration);
 
                 // Ajouter la valeur du pixel au vecteur 'pixels'
-                pixels.push(result.re as f32);
-                pixels.push(result.im as f32);
+
+                
+                pixels.push(PixelIntensity { zn: result.re, count: result.im });
             }
         }
     }
