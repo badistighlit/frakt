@@ -20,20 +20,15 @@ pub fn send_message(mut stream: &TcpStream, message: Message, data: &Vec<u8>) {
     let total_size = serialized_size + data_size ;
     println!("\ntotal_size :  {}", total_size);
 
-    // Envoi de la taille totale du message
     stream.write_all(&total_size.to_be_bytes()).expect("failed to send total size");
     println!( "\nStep 1 passed");
 
-    // Envoi de la taille du message JSON
     stream.write_all(&serialized_size.to_be_bytes()).expect("failed to send total size JSON");
     println!( "\nStep 2 passed");
 
-
-    // Envoi du message JSON
     stream.write_all(&serialized.as_bytes()).expect("failed to send serialized message");
     println!( "\nStep 3 passed");
 
-    // Envoi des données binaires
     if !data.is_empty() {
         for byte in data {
             stream.write_all(&[*byte]).expect("failed to send data");
@@ -88,27 +83,22 @@ pub fn reception_message(mut stream: &TcpStream) {
     let message = String::from_utf8_lossy(&json_buffer).into_owned();
     println!("Étape 9 : Conversion du buffer JSON en chaîne de caractères terminée, valeur : {}", message);
 
-    // Traitement du message
     match parse_json_string(&message) {
         Ok(parsed_message) => {
             match parsed_message {
                 Message::FragmentTask(fragment_task) => {
-                    // Si le message est de type FragmentTask, calculer le résultat
                     let Ok((fragment_result, data)) = calculate_fragment(&fragment_task) else { todo!() };
                     
                     println!("\nMessage reçu : \n{:?}", fragment_result);
-                    //println!("data : {:?}", data);
 
                     for i in 0..data.len() {
                         img_data.extend(data[i].zn.to_be_bytes());
                         img_data.extend(data[i].count.to_be_bytes());
                     }
                     println!("\n fragment_result: {:?} \n", &fragment_result);
-                    // Envoi du FragmentResult
                     send_message(&stream, Message::FragmentResult(fragment_result), img_data);
                 }
                 _ => {
-                    // Traitez d'autres types de messages si nécessaire
                     dbg!(parsed_message);
                 }
             }
