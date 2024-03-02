@@ -14,31 +14,31 @@ pub fn send_message(mut stream: &TcpStream, message: Message, data: &Vec<u8>) {
     let serialized_size = serialized.len() as u32;
     let data_size = data.len() as u32;
     let total_size = serialized_size + data_size;
-
     println!("\ntotal_size :  {}", total_size);
 
     // Envoi de la taille totale du message
-    stream.write_all(&total_size.to_be_bytes());
+    stream.write_all(&total_size.to_be_bytes()).expect("failed to send total size");
     println!( "\nStep 1 passed");
 
     // Envoi de la taille du message JSON
-    stream.write_all(&serialized_size.to_be_bytes());
+    stream.write_all(&serialized_size.to_be_bytes()).expect("failed to send total size");
     println!( "\nStep 2 passed");
 
     // Envoi du message JSON
-    stream.write_all(serialized.as_bytes());
+    stream.write_all(serialized.as_bytes()).expect("failed to send serialized message");
     println!( "\nStep 3 passed");
 
     // Envoi des données binaires
     if !data.is_empty() {
         for byte in data {
-            stream.write_all(&[*byte]);
+            stream.write_all(&[*byte]).expect("failed to send data");
         }
         println!("\nStep 4 passed");
     }
 
     reception_message(stream);
 }
+
 
 
 
