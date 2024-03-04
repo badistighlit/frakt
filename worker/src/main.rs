@@ -1,10 +1,13 @@
 use messages::messages::{FragmentResult,FragmentRequest,FragmentTask, Message, JuliaDescriptor};
 use messages::messages::calculate_fragment;
-use std::io::{self, Write, Read};
-use std::net::TcpStream;
+use std::{io::{self, Write, Read}, net::TcpStream};
 use std::str;
 
-pub fn send_message(mut stream: &TcpStream, message: Message, data: &Vec<u8>) {
+mod newMain;
+
+pub fn send_message(message: Message, data: &Vec<u8>) -> Result<(String, Vec<u8>), io::Error> {
+    let mut stream = TcpStream::connect("localhost:8787").unwrap();
+
     println!("\nstream : {:?}\n", stream);
     println!("\nmessage : {:?}\n", message);
 
@@ -29,56 +32,62 @@ pub fn send_message(mut stream: &TcpStream, message: Message, data: &Vec<u8>) {
     stream.write_all(&serialized.as_bytes()).expect("failed to send serialized message");
     println!( "\nStep 3 passed");
 
-    if !data.is_empty() {
-        for byte in data {
-            stream.write_all(&[*byte]).expect("failed to send data");
-        }
-        println!("\nStep 4 passed");
-    }
+    stream.write_all(&data).expect("failed to send data");
+    println!("{:?}", data);
+    println!("\nStep 4 passed");
+    
+    
+    let(messages,data) = match newMain::reception_message(&mut stream) {
+        Ok(r) => r,
+        Err(_e)=> panic!("An error occured during the reception of messages"),
+    };
+    println!("messages : {:?}", messages);
+    println!("data : {:?}", data);
+    Ok((messages, data))
 
-    reception_message(stream);
 }
 
 
 
 
-pub fn reception_message(mut stream: &TcpStream) {
+pub fn reception_message(stream: &mut TcpStream) {
+    
     println!("Étape 1 : Début de la réception du message");
     let mut size_bytes = [0u8; 4];
-    stream.read_exact(&mut size_bytes);
-    println!("Étape 2 : Lecture de size_bytes terminée, valeur : {:?}", size_bytes);
+    let _ = stream.read_exact(&mut size_bytes);
+    let total_size = u32::from_be_bytes(size_bytes);
+    println!("Étape 2 : Lecture de size_bytes terminée, valeur : {:?}", total_size);
 
     let mut new_size_json = [0; 4];
-    stream.read_exact(&mut new_size_json);
+    let _ = stream.read_exact(&mut new_size_json);
     println!("Étape 3 : Lecture de new_size_json terminée, valeur : {:?}", new_size_json);
 
     let msg_size = u32::from_be_bytes(new_size_json) as usize;
     println!("Étape 4 : Conversion de new_size_json en usize terminée, valeur : {}", msg_size);
 
     let mut json_buffer = vec![0u8; msg_size as usize];
-    stream.read_exact(&mut json_buffer);
+    let _ = stream.read_exact(&mut json_buffer);
     println!("Étape 5 : Lecture du buffer JSON terminée, valeur : {:?}", json_buffer);
 
-    let img_data: &mut Vec<u8> = &mut Vec::new();  
+    let mut data_binaire_taille = 16;
+
+    let mut img_data: Vec<u8> = vec![0_u8; data_binaire_taille];  
     println!("Étape 6 : Initialisation de img_data terminée, valeur : {:?}", img_data);
 
-    let mut data_binaire_taille = 0;
-    if msg_size >= size_bytes.len() {
-        data_binaire_taille = msg_size - size_bytes.len();
+    if msg_size >= total_size as usize{
+        data_binaire_taille = msg_size - total_size as usize;
         println!("Étape 7 : Calcul de data_binaire_taille terminé, valeur : {}", data_binaire_taille);
         println!("msg_size : {}", msg_size);
-        println!("size_bytes.len() : {}", size_bytes.len());
+        println!("total_size.len() : {}", total_size as usize);
     } else {
         eprintln!("Erreur Étape 7 : msg_size est plus petit que size_bytes.len()");
         println!("msg_size : {}", msg_size);
-        println!("size_bytes.len() : {}", size_bytes.len());
+        println!("total_size as usize : {}", total_size as usize);
     }    
 
-    if data_binaire_taille > 0 {
-        *img_data = vec![0; data_binaire_taille];
-        stream.read_exact(img_data);
-        println!("Étape 8 : Lecture des données binaires terminée, valeur : {:?}", img_data);
-    }
+    let _ = stream.read_exact(&mut img_data);
+    println!("Étape 8 : Lecture des données binaires terminée, valeur : {:?}", img_data);
+    
 
     let message = String::from_utf8_lossy(&json_buffer).into_owned();
     println!("Étape 9 : Conversion du buffer JSON en chaîne de caractères terminée, valeur : {}", message);
@@ -96,7 +105,9 @@ pub fn reception_message(mut stream: &TcpStream) {
                         img_data.extend(data[i].count.to_be_bytes());
                     }
                     println!("\n fragment_result: {:?} \n", &fragment_result);
-                    send_message(&stream, Message::FragmentResult(fragment_result), img_data);
+                    let message_send: Message = Message::FragmentResult(fragment_result);
+
+                    send_message(message_send, &mut img_data);
                 }
                 _ => {
                     dbg!(parsed_message);
@@ -120,17 +131,37 @@ fn parse_json_string(json_string: &str) -> Result<Message, serde_json::Error> {
 
 
 pub fn main() {
-    let server_address = "localhost:8787";
     let fragment_request = FragmentRequest {
         worker_name: String::from("wsh"),
         maximal_work_load: 230,
     };
 
     println!("FragmentRequest = : {:#?}\n", fragment_request);
-    let stream = TcpStream::connect(server_address).unwrap();
-    let img_data: &Vec<u8> = &mut &Vec::new();
+    let mut img_data: Vec<u8> = Vec::new();
     let message_send: Message = Message::FragmentRequest(fragment_request);
-    let a = send_message(&stream,message_send, img_data);
-    println!("{:?}",a);
-  
+    let(messages,data) = match send_message(message_send, &img_data) {
+        Ok(r) => r,
+        Err(_e)=> panic!("truc"),
+    };
+
+    let messages_type = match parse_json_string(&messages) {
+        Ok(r) => r,
+        Err(_e)=> panic!("An error occured during the reception of messages"),
+    };
+
+    //voir le type du message
+    let fragment_task = match messages_type {
+        Message::FragmentTask(r) => r,
+        _ => panic!("The received message is not a Fragment Task")
+    };
+    
+    println!("fragment_task = {:?}", fragment_task);
+    let Ok((fragment_result, pixels_data)) = calculate_fragment(&fragment_task) else { todo!() };
+
+    for i in 0..data.len() {
+        img_data.extend(pixels_data[i].zn.to_be_bytes());
+        img_data.extend(pixels_data[i].count.to_be_bytes());
+    }
+    send_message(Message::FragmentResult(fragment_result), &img_data);
+    
 }
